@@ -21,11 +21,13 @@ type Area struct {
 }
 
 type Debug struct {
-	areas   []*Area
-	aread   map[string]*Area
-	current int
-	label   string
-	alias   string
+	areas         []*Area
+	aread         map[string]*Area
+	current       int
+	label         string
+	alias         string
+	useFilePrefix bool
+	useFuncPrefix bool
 }
 
 var lock = &sync.Mutex{}
@@ -77,6 +79,26 @@ func SetArea(areas ...Area) {
 	}
 }
 
+func SetUseFilePrefix(prefix bool) {
+	di := getInstance()
+	lock.Lock()
+	defer lock.Unlock()
+	if di.debug == nil {
+	} else {
+		di.debug.useFilePrefix = prefix
+	}
+}
+
+func SetUseFuncPrefix(prefix bool) {
+	di := getInstance()
+	lock.Lock()
+	defer lock.Unlock()
+	if di.debug == nil {
+	} else {
+		di.debug.useFuncPrefix = prefix
+	}
+}
+
 func LoadFromFile(fileName string) error {
 	bs, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -110,6 +132,20 @@ func LoadFromFile(fileName string) error {
 					case "file":
 						a := Area{File: value}
 						areas = append(areas, a)
+					case "usefuncprefix":
+						value = strings.ToLower(value)
+						prefix := false
+						if value == "true" || value == "t" {
+							prefix = true
+						}
+						SetUseFuncPrefix(prefix)
+					case "usefileprefix":
+						value = strings.ToLower(value)
+						prefix := false
+						if value == "true" || value == "t" {
+							prefix = true
+						}
+						SetUseFilePrefix(prefix)
 					}
 				}
 			}
@@ -175,9 +211,19 @@ func (d *Debug) Printf(fmts string, args ...interface{}) *Debug {
 			flag = true
 		}
 		if flag {
-			argss := []interface{}{file, fn}
+			argss := []interface{}{}
+			format := ""
+			if d.useFilePrefix {
+				argss = append(argss, file)
+				format = format + "%v "
+			}
+			if d.useFuncPrefix {
+				argss = append(argss, fn)
+				format = format + "%v "
+			}
+			//argss := []interface{}{file, fn}
 			argss = append(argss, args...)
-			fmt.Printf("%v %v "+fmts, argss...)
+			fmt.Printf(format+fmts, argss...)
 		}
 	}
 	d.alias = ""

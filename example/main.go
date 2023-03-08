@@ -35,6 +35,8 @@ func main() {
 	if false {
 		debug.SetArea(debug.Area{Alias: "tst1"}, debug.Area{Func: "Tst2"})
 		debug.SetArea(debug.Area{Func: "Tst3"})
+		debug.SetUseFuncPrefix(false)
+		debug.SetUseFilePrefix(true)
 	} else {
 		debug.LoadFromFile("debug.cfg")
 	}
